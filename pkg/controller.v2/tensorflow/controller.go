@@ -29,6 +29,8 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/cache"
 
+	"strings"
+
 	"github.com/kubeflow/tf-operator/cmd/tf-operator.v2/app/options"
 	tfv1alpha2 "github.com/kubeflow/tf-operator/pkg/apis/tensorflow/v1alpha2"
 	tfjobclientset "github.com/kubeflow/tf-operator/pkg/client/clientset/versioned"
@@ -225,6 +227,13 @@ func (tc *TFController) processNextWorkItem() bool {
 	if err != nil {
 		if err == errNotExists {
 			logger.Infof("TFJob has been deleted: %v", key)
+			//try to delete pod and service once
+			job := tfv1alpha2.TFJob{}
+			tmp := strings.Split(key.(string), "/")
+			namespace, name := tmp[0], tmp[1]
+			job.Name = name
+			job.Namespace = namespace
+			tc.deletePodsAndServiceByTfJob(&job)
 			return true
 		}
 

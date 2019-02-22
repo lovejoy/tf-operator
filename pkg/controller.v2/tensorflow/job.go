@@ -159,14 +159,21 @@ func (tc *TFController) cleanupTFJob(tfJob *tfv1alpha2.TFJob) error {
 
 // deleteTFJob deletes the given TFJob.
 func (tc *TFController) deleteTFJob(tfJob *tfv1alpha2.TFJob) error {
+	tc.deletePodsAndServiceByTfJob(tfJob)
+	return tc.tfJobClientSet.KubeflowV1alpha2().TFJobs(tfJob.Namespace).Delete(tfJob.Name, &metav1.DeleteOptions{})
+}
+
+func (tc *TFController) deletePodsAndServiceByTfJob(tfJob *tfv1alpha2.TFJob) error {
+	tflogger.LoggerForJob(tfJob).Infof("try to delete pod and service")
 	pods, err := tc.GetPodsForJob(tfJob)
+	tflogger.LoggerForJob(tfJob).Debugf("get pods is %v", pods)
 	if err != nil {
 		tflogger.LoggerForJob(tfJob).Warnf("could get pods for tfjob object: %v", err)
 	} else {
 		if err := tc.deletePodsAndServices(tfJob, pods); err != nil {
 			tflogger.LoggerForJob(tfJob).Warnf("could  delete pods and service for tfjob object: %v", err)
-
+			return err
 		}
 	}
-	return tc.tfJobClientSet.KubeflowV1alpha2().TFJobs(tfJob.Namespace).Delete(tfJob.Name, &metav1.DeleteOptions{})
+	return err
 }
