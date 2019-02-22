@@ -165,8 +165,11 @@ func (tc *TFController) deleteTFJob(tfJob *tfv1alpha2.TFJob) error {
 
 func (tc *TFController) deletePodsAndServiceByTfJob(tfJob *tfv1alpha2.TFJob) error {
 	tflogger.LoggerForJob(tfJob).Infof("try to delete pod and service")
-	pods, err := tc.GetPodsForJob(tfJob)
-	tflogger.LoggerForJob(tfJob).Debugf("get pods is %v", pods)
+	selector, _ := metav1.LabelSelectorAsSelector(&metav1.LabelSelector{
+		MatchLabels: tc.GenLabels(tfJob.GetName()),
+	})
+	pods, err := tc.PodLister.List(selector)
+	tflogger.LoggerForJob(tfJob).Infof("get pods is %v", pods)
 	if err != nil {
 		tflogger.LoggerForJob(tfJob).Warnf("could get pods for tfjob object: %v", err)
 	} else {
