@@ -173,9 +173,14 @@ func (tc *TFController) deletePodsAndServiceByTfJob(tfJob *tfv1alpha2.TFJob) err
 	if err != nil {
 		tflogger.LoggerForJob(tfJob).Warnf("could get pods for tfjob object: %v", err)
 	} else {
-		if err := tc.deletePodsAndServices(tfJob, pods); err != nil {
-			tflogger.LoggerForJob(tfJob).Warnf("could  delete pods and service for tfjob object: %v", err)
-			return err
+		for _, pod := range pods {
+			if err := tc.PodControl.DeletePod(pod.Namespace, pod.Name, tfJob); err != nil {
+				tflogger.LoggerForJob(tfJob).Warnf("could delete pods for tfjob object: %v", err)
+			}
+			// Pod and service have the same name, thus the service could be deleted using pod's name.
+			if err := tc.ServiceControl.DeleteService(pod.Namespace, pod.Name, tfJob); err != nil {
+				tflogger.LoggerForJob(tfJob).Warnf("could delete service for tfjob object: %v", err)
+			}
 		}
 	}
 	return err
