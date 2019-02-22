@@ -159,5 +159,14 @@ func (tc *TFController) cleanupTFJob(tfJob *tfv1alpha2.TFJob) error {
 
 // deleteTFJob deletes the given TFJob.
 func (tc *TFController) deleteTFJob(tfJob *tfv1alpha2.TFJob) error {
+	pods, err := tc.GetPodsForJob(tfJob)
+	if err != nil {
+		tflogger.LoggerForJob(tfJob).Warnf("could get pods for tfjob object: %v", err)
+	} else {
+		if err := tc.deletePodsAndServices(tfJob, pods); err != nil {
+			tflogger.LoggerForJob(tfJob).Warnf("could  delete pods and service for tfjob object: %v", err)
+
+		}
+	}
 	return tc.tfJobClientSet.KubeflowV1alpha2().TFJobs(tfJob.Namespace).Delete(tfJob.Name, &metav1.DeleteOptions{})
 }
