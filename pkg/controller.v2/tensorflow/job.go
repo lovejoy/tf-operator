@@ -113,7 +113,7 @@ func (tc *TFController) deletePodsAndServices(tfJob *tfv1alpha2.TFJob, pods []*v
 	}
 
 	// Delete nothing when the cleanPodPolicy is None.
-	if *tfJob.Spec.CleanPodPolicy == tfv1alpha2.CleanPodPolicyNone {
+	if tfJob.Spec.CleanPodPolicy != nil && *tfJob.Spec.CleanPodPolicy == tfv1alpha2.CleanPodPolicyNone {
 		return nil
 	}
 
